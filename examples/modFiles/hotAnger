@@ -1,0 +1,24 @@
+# manipulate duration-parameters
+
+-stressedIntensity 9 1
+
+-changeSpeechRate 70 1 1
+
+-changeLastSylContour 2 20
+-changePitchContourStressed 2 30 1 contour, gradient, both
+
+# shift f0Vals in %
+-changeAvrF0 150
+versuch 1:
+-changeStressedAvrF0 150 1
+
+versuch 2:
+#-changeRange 300
+
+#-changePreStressedAvrF0 180 0
+
+-undershootVowels 0 30 accent rate
+-overshootVowels 1 30
+-overshootVowels 2 50
+
+-tense 50

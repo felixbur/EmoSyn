@@ -1,0 +1,100 @@
+this is the example directory of emoSyn.
+
+If you want to build a database following this example, you need
+the Entropic ESPS-tools and xwaves. I further assume that you use
+unix and have perl and preferably the sensyn synthesizer in your path. 
+
+the filelist should show the following:
+
+README 		- this file
+diphonDB/	- example diphone-database for a german utterance
+modFiles/	- example emoSyn modification-files for different emotions
+example.sd  	- the utterance that got copysynthesized.
+example.ll  	- phone-labeling file 
+example.dp  	- diphone-labeling file
+example.ed.fb  	- the manually corrected formant-tracks
+example.ed.f0   - the manually corrected f0- and amplitude-tracks
+example.phon 	- input file for emoSyn to generate the eph-file from 
+			the database
+example.eph	- the resulting input file for emoSyn
+emoSyn.conf  	- klatt default parameters needed by emoSyn
+
+WHAT TO DO TO MAKE A COPY-SYNTHESIS
+------------------------------------
+
+1.- record an utterance (speaker should be male and have a nice voice characteristic with easily seen formant tracks ;-))
+
+2.- convert to (esps) sd-format and launch xwaves. (see example-org.sd)
+
+3. segment the file into diphones. It might be easier if you start with a 
+	phone segmenting (see example.ll)
+	and than mark the diphone borders (see example.dp). 
+	While labeling the utterance you must keep in mind that all 
+	phone-names must be known to emoSyn. As I used emoSyn for German,
+	I provided for all phones that are mentioned in the de1 database
+	of mbrola (in Sampa, this should cover german).
+
+	Each diphone starts with it's name, followed by some markers for the 
+	transitions. It ends with a ".".
+	eg:
+0.115 -1 a-n
+0.145 -1 t1 
+0.155 -1 brd 
+0.155 -1 t2 
+0.175 -1 .
+	means that diphone a-n starts at 0.115 sec., the transition from /a/ 
+	to /n/ starts at 0.145, the border between /a/ and /n/ is at 0.155
+	and the transition from /a/ to /n/ ends at 0.155 (i.e. abrupt). 
+	The steady state of the /n/ is given until 0.175 sec.
+
+	If you have a stop as first phone of a diphone, t1 designates the time
+	where the burst is finished and brd the time where the aspiration
+	is finished. If you have a stop as second phone, t2 means nothing, it
+	should be set t2=brd. Same goes for silence.
+
+4. generate f0-file.
+	make a f0-analysis 
+	(Menu Changes - Add extended Waveform Op - F0 analysis)
+	and hand-edit the f0 and amplitude (rms) contour.
+	(right click - Button modes - middle/left button - modify signal)
+	The result is saved automatically by xwaves as <filname>.sd.ed.out.
+	Save it under <filname>.ed.f0  .
+
+5. generate fb-file.
+	Make a spectrogram of the whole utterance.
+	Make a format overlay over the spectrogram
+	(Menu Changes - Add extended Image Op - formants (w/overlay))
+	and hand-edit the formant-tracks:
+	(right click - Button modes - middle/left button - mark formants)
+	The result is saved automatically by xwaves as 
+	<filname>(some numbers).fb.ed.sig.
+	Save it under <filname>.ed.fb  .
+
+6. build the database
+	use the perlscript filterStartWerte.pl that comes with this 
+	distribution to make all timevalues in the labelfile dividable by 5.
+
+	use the perlscript segmentDiphon.pl that comes with this 
+	distribution to generate the database in directory <diphonDir>
+	segmentDiphon.pl diphonLabelFile formantFile f0File diphonDir
+
+7. generate the eph-file
+	eph (extended pho) is the input-format of emoSyn.
+	you can generate it with emoSyn for a test sentence, if you
+	write a phon-file, where in each line is the name of the phone 
+	or a syllable border (see example.phon).
+	then you can invoke emoSyn with the following line:
+	bin/emoSyn -kd examples/emoSyn.conf -db examples/diphonDB/ 
+			-makePhoFromDB examples/example.phon > example.eph;
+	
+8. that's it. 
+	if you have "sensyn" (the formant-synthesizer) and "play" (for playing wav)
+	in your path, you can listen to the result by using the testSenSyn.sh-script.
+	(the sensyn-program should be patched to enable batch-mode).
+	If some phones sound extremely strange, it might be that theu didn't occur in
+	my testsentence and I never modeled them. You should provide for them
+	by changing the methods
+	phon::setSoundSource() and phon::setArticulationTractFilter() .
+
+	some example modification-files (that's what emoSyn is all about) are
+	in the directory modFiles/  .

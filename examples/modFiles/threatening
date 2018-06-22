@@ -1,0 +1,20 @@
+-stressedIntensity 9 1
+
+#-changeDurStressed 120 1 1
+#-changeDurNonStressed 80 0 1	
+-changeSpeechRate 70 1 1
+-changeLastSylContour 2 80
+
+-changeAvrF0 80
+
+#-changeStressedAvrF0 100 1
+-changePitchContourStressed 2 30 1 contour, gradient, both
+
+#-changeRange 200
+
+versuch 3:
+-undershootVowels 0 30 accent rate
+-overshootVowels 1 30
+-overshootVowels 2 50
+
+-tense 50

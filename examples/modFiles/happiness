@@ -1,0 +1,14 @@
+-changeSpeechRate 120 1 1
+-changeDurFricVL 150 1
+
+#-addWaves 200 80 1
+#-changePitchContourStressed 1 50 1 contour, gradient, both
+#-changeRange 200
+
+# shift f0Vals in %
+-changeAvrF0 100
+
+#-spreadLips 10
+
+# add breathyness to all vowels/voiced phones
+-breathy 50

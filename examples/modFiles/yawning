@@ -1,0 +1,81 @@
+# manipulate duration-parameters
+
+# change dur of all phones, args: <rate in %> <method 1:TIME_ALIGNED, 2:STEADY_STATE_CUT>
+>
+-changeSpeechRate 120 1 1
+
+# change dur, args: <rate in %> <syl 0=phraseAcc, 1=phrase/wordAcc> <method>
+-changeDurStressed 140 1 1 
+
+# change dur, args: <rate in %> <syl 0=noneAcc, 1=none/wordAcc> <method>
+-changeDurNonStressed 100 0 1 
+
+# change dur of specific phonManners, args: <rate in %> <method>
+-changeDurVowels 100 1
+-changeDurLiquides 100 1 
+-changeDurNasals 100 1
+-changeDurFricV 100 1
+-changeDurFricVL 100 1
+-changeDurPlosV 100 1
+-changeDurPlosVL 100 1
+-changeDurSilence 100 1
+
+
+# manipulate intonation parameters
+
+# shift f0Vals in %
+-changeAvrF0 200
+
+# smoothe f0-vals
+-smootheF0 0
+# compress/expand f0Vals around phraseMeanF0 in %
+-changeRange 100
+
+# compress/expand f0Vals around syllableMeanF0 in %
+-changeVariability 100 
+
+
+# change pitch-contour of whole phrase to <contour>,
+# <contour> can be straight, rise or fall
+# - straight: all syllable-meanF0Vals become meanF0Val
+# - rise/fall: last syllable gets pitch-changed according to <rate>, 
+# all syllables before get changed in percentage to distance from last
+# syllable
+-changePhraseContour 2 20 
+
+
+# like changePhraseContour, but starting at each phrase accented Syllable
+-changePhraseContourToAccent 100
+
+# -changeLastSylContour contour, gradient
+-changeLastSylContour 1 0
+
+-changeStressedAvrF0 100 1
+-changePitchContourStressed 1 0 0 contour, gradient, both
+
+# manipulate voice-quality parameters
+
+-overshootVowels 0 0 accent rate
+-overshootVowels 1 0
+-overshootVowels 2 0
+-undershootVowels 0 50
+-undershootVowels 1 20
+-undershootVowels 2 20
+
+# -addJitter <accent> <rate> <method>
+# simulate Jitter at all voiced phones in syllables with <accent>.
+# If <method> = 1, all nonzero f0Vals get displaced about <rate> 
+# alternating down and up.
+# If <method> = 2, the klattSyn parameter skew/FL is set to <rate>
+-addJitter 0 0 1
+-addJitter 1 0 1
+-addJitter 2 0 1
+
+# add breathyness to all vowels/voiced phones
+-breathy 0
+-creaky 0
+-falsett 0
+-whispery 0
+-tense 0
+# coarticulation args: <rate (determines frameNum in %)> <type: 0=progressive, 1=regressive, 2=both>
+-coarticulation 0 2

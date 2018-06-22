@@ -1,0 +1,980 @@
+#!/usr/X11R6/bin/wish -f
+
+# viewTracks - tcl/tk script to view formantsynthesizer parameter tracks 
+# format of formantsynthesizer parameter file is
+# simmons & iles version of the klatt-synthesizer
+# to see the labels there should be a line above each phone-section
+# like "# name of phone: <name of phone, eg. a>"
+# author: felixbur@kgw.tu-berlin.de
+
+# pathes
+
+set TMP_DIR /tmp
+
+# usage
+if {$argc != 1} {
+    puts "usage: viewTracks <inFileName>"
+    exit
+}
+
+# constants
+
+set fileName [lindex $argv 0]
+set canvasWidth 900
+set canvasHeight 120 
+set labCanvasHeight 20 
+
+set fileTitle [exec basename $fileName .par]
+
+wm title . "viewTracks: $fileTitle"
+
+# utility procedures
+proc fileOpen {fileName} {
+    if [catch {open $fileName r} fileId] {
+        puts stderr $fileId
+        return 1
+    } else {
+        while {! [eof $fileId]} {
+            lappend list [gets $fileId]
+        }
+	close $fileId
+    }
+    return $list
+}
+proc LOG {x} {
+    if {$x > 0} {
+	return [expr log10($x)*100]
+    } else {
+	return 0
+    }
+}
+
+frame .main
+frame .main.top1
+frame .main.top2
+frame .main.top3
+frame .main.top4
+frame .main.top5
+frame .main.top6
+
+frame .main.bottom1
+frame .main.bottom2
+frame .main.bottom3
+frame .main.bottom4
+frame .main.bottom5
+frame .main.bottom6
+frame .main.bottom7
+
+
+button .showTrack -text "show track"
+button .exit -text quit
+button .reload -text reload
+button .play -text play
+
+label .message -textvariable message
+label .colLab -text "linecolor: "
+label .paintOverLab -text "paintOver: "
+canvas .can -bg white -height $canvasHeight -width $canvasWidth
+canvas .labCan -bg white -height $labCanvasHeight -width $canvasWidth
+entry .maxVal  -textvariable maxVal -width 4
+set maxVal 0
+label .maxValLab -text "max x-val"
+radiobutton .red -variable lineColor -text red -value red
+radiobutton .green -variable lineColor -text green -value green
+radiobutton .blue -variable lineColor -text blue -value blue
+radiobutton .black -variable lineColor -text black -value black
+set lineColor black
+
+radiobutton .paintOver -variable paintOver -text add -value true
+radiobutton .paintNew -variable paintOver -text new -value false
+set paintOver false
+
+pack .main .main.top1 .main.top2 .main.top3 .main.top4 .main.top5 .main.top6 -fill x
+pack .showTrack .exit .reload .play -in .main.top1 -side left
+pack .colLab .red .green .blue .black  -in .main.top3 -side left
+pack  .paintOverLab .paintOver .paintNew -in .main.top4 -side left
+pack .maxValLab .maxVal -in .main.top5
+pack .message .can .labCan -in .main.bottom7
+
+
+radiobutton .f0 -variable param -text f0 -value f0
+radiobutton .av -variable param -text av -value av
+radiobutton .f1 -variable param -text f1 -value f1
+radiobutton .b1 -variable param -text b1 -value b1
+radiobutton .f2 -variable param -text f2 -value f2
+radiobutton .b2 -variable param -text b2 -value b2
+radiobutton .f3 -variable param -text f3 -value f3
+radiobutton .b3 -variable param -text b3 -value b3
+radiobutton .f4 -variable param -text f4 -value f4
+radiobutton .b4 -variable param -text b4 -value b4
+radiobutton .f5 -variable param -text f5 -value f5
+radiobutton .b5 -variable param -text b5 -value b5
+radiobutton .f6 -variable param -text f6 -value f6
+radiobutton .b6 -variable param -text b6 -value b6
+radiobutton .fnz -variable param -text fnz -value fnz
+radiobutton .bnz -variable param -text bnz -value bnz
+radiobutton .fnp -variable param -text fnp -value fnp
+radiobutton .bnp -variable param -text bnp -value bnp
+radiobutton .asp -variable param -text asp -value asp
+radiobutton .kopen -variable param -text kopen -value kopen
+radiobutton .aturb -variable param -text aturb -value aturb
+radiobutton .tilt -variable param -text tilt -value tilt
+radiobutton .af -variable param -text af -value af
+radiobutton .skew -variable param -text skew -value skew
+radiobutton .a1 -variable param -text a1 -value a1
+radiobutton .b1p -variable param -text b1p -value b1p
+radiobutton .a2 -variable param -text a2 -value a2
+radiobutton .b2p -variable param -text b2p -value b2p
+radiobutton .a3 -variable param -text a3 -value a3
+radiobutton .b3p -variable param -text b3p -value b3p
+radiobutton .a4 -variable param -text a4 -value a4
+radiobutton .b4p -variable param -text b4p -value b4p
+radiobutton .a5 -variable param -text a5 -value a5
+radiobutton .b5p -variable param -text b5p -value b5p
+radiobutton .a6 -variable param -text a6 -value a6
+radiobutton .b6p -variable param -text b6p -value b6p
+radiobutton .anp -variable param -text anp -value anp
+radiobutton .ab -variable param -text ab -value ab
+radiobutton .avp -variable param -text avp -value avp
+radiobutton .gain -variable param -text gain -value gain
+set param f0
+pack .main.bottom1
+pack .main.bottom2
+pack .main.bottom3
+pack .main.bottom4
+pack .main.bottom5
+pack .main.bottom6
+pack .main.bottom7
+
+pack .f0 .av -in .main.bottom1 -side left
+pack .f1 .b1 .f2 .b2 .f3 .b3 .f4 .b4 .f5 .b5 .f6 .b6 -in .main.bottom2 -side left
+pack .fnz .bnz .fnp .bnp -in .main.bottom3 -side left
+pack .asp .kopen .aturb .tilt .af .skew  -in .main.bottom4 -side left
+pack .a1 .b1p .a2 .b2p .a3 .b3p .a4 .b4p .a5 .b5p .a6 .b6p -in .main.bottom5 -side left 
+pack .anp .ab .avp .gain -in .main.bottom6 -side left
+
+proc readFile {} {
+    global fileName
+    global canvasHeight labCanvasHeight canvasWidth
+    global nameList  posList frameCounter
+    global f0t avt f1t b1t f2t b2t f3t b3t f4t b4t f5t b5t f6t b6t fnzt bnzt fnpt bnpt aspt kopent aturbt tiltt aft skewt a1t b1pt a2t b2pt a3t b3pt a4t b4pt a5t b5pt a6t b6pt anpt abt avpt gaint
+    global f0 av f1 b1 f2 b2 f3 b3 f4 b4 f5 b5 f6 b6 fnz bnz fnp bnp asp kopen aturb tilt af skew a1 b1p a2 b2p a3 b3p a4 b4p a5 b5p a6 b6p anp ab avp gain
+
+    global f0Max avMax f1Max b1Max f2Max b2Max f3Max b3Max f4Max b4Max f5Max b5Max f6Max b6Max fnzMax bnzMax fnpMax bnpMax aspMax kopenMax aturbMax tiltMax afMax skewMax a1Max b1pMax a2Max b2pMax a3Max b3pMax a4Max b4pMax a5Max b5pMax a6Max b6pMax anpMax abMax avpMax gainMax
+    set posList ""; set nameList "";
+
+    set f0 ""; set av ""; set f1 "";set b1 "";set f2 "";set b2 "";set f3 "";set b3 "";set f4 "";set b4 "";set f5 "";set b5 "";set f6 "";set b6 "";set fnz "";set bnz "";set fnp "";set bnp "";set asp "";set kopen "";set aturb "";set tilt "";set af "";set skew "";set a1 "";set b1p "";set a2 "";set b2p "";set a3 "";set b3p "";set a4 "";set b4p "";set a5 "";set b5p "";set a6 "";set b6p "";set anp "";set ab "";set avp "";set gain "";
+    set f0t ""; set avt ""; set f1t "";set b1t "";set f2t "";set b2t "";set f3t "";set b3t "";set f4t "";set b4t "";set f5t "";set b5t "";set f6t "";set b6t "";set fnzt "";set bnzt "";set fnpt "";set bnpt "";set aspt "";set kopent "";set aturbt "";set tiltt "";set aft "";set skewt "";set a1t "";set b1pt "";set a2t "";set b2pt "";set a3t "";set b3pt "";set a4t "";set b4pt "";set a5t "";set b5pt "";set a6t "";set b6pt "";set anpt "";set abt "";set avpt "";set gaint "";
+    
+    set f0Max 0;set f0Max 0;set avMax 0;set f1Max 0;set b1Max 0;set f2Max 0;set b2Max 0;set f3Max 0;set b3Max 0;set f4Max 0;set b4Max 0;set f5Max 0;set b5Max 0;set f6Max 0;set b6Max 0;set fnzMax 0;set bnzMax 0;set fnpMax 0;set bnpMax 0;set aspMax 0;set kopenMax 0;set aturbMax 0;set tiltMax 0;set afMax 0;set skewMax 0;set a1Max 0;set b1pMax 0;set a2Max 0;set b2pMax 0;set a3Max 0;set b3pMax 0;set a4Max 0;set b4pMax 0;set a5Max 0;set b5pMax 0;set a6Max 0;set b6pMax 0;set anpMax 0;set abMax 0;set avpMax 0;set gainMax 0;
+    
+    set frameCounter 0
+
+    if [catch {open $fileName r} fileId] {
+	puts stderr $fileId
+	exit
+    } else {
+	while {! [eof $fileId]} {
+	    set buffer [gets $fileId]
+	    if {[string compare $buffer ""] != 0} {
+		if {[string first # $buffer] != 0} {
+		    set frameCounter [expr $frameCounter + 1]
+		    lappend f0t [expr [lindex $buffer 0]/10]
+		    if { [expr [lindex $buffer 0]/10] > $f0Max } {
+			set f0Max [expr [lindex $buffer 0]/10]
+		    }
+		    lappend avt [lindex $buffer 1]
+		    if { [lindex $buffer 1] > $avMax } {
+			set avMax [lindex $buffer 1]
+		    }
+		    lappend f1t [lindex $buffer 2]
+		    if { [lindex $buffer 2] > $f1Max } {
+			set f1Max [lindex $buffer 2]
+		    }
+		    lappend b1t [lindex $buffer 3]
+		    if { [lindex $buffer 3] > $b1Max } {
+			set b1Max [lindex $buffer 3]
+		    }
+		    lappend f2t [lindex $buffer 4]
+		    if { [lindex $buffer 4] > $f2Max } {
+			set f2Max [lindex $buffer 4]
+		    }
+		    lappend b2t [lindex $buffer 5]
+		    if { [lindex $buffer 5] > $b2Max } {
+			set b2Max [lindex $buffer 5]
+		    }
+		    lappend f3t [lindex $buffer 6]
+		    if { [lindex $buffer 6] > $f3Max } {
+			set f3Max [lindex $buffer 6]
+		    }
+		    lappend b3t [lindex $buffer 7]
+		    if { [lindex $buffer 7] > $b3Max } {
+			set b3Max [lindex $buffer 7]
+		    }
+		    lappend f4t [lindex $buffer 8]
+		    if { [lindex $buffer 8] > $f4Max } {
+			set f4Max [lindex $buffer 8]
+		    }
+		    lappend b4t [lindex $buffer 9]
+		    if { [lindex $buffer 9] > $b4Max } {
+			set b4Max [lindex $buffer 9]
+		    }
+		    lappend f5t [lindex $buffer 10]
+		    if { [lindex $buffer 10] > $f5Max } {
+			set f5Max [lindex $buffer 10]
+		    }
+		    lappend b5t [lindex $buffer 11]
+		    if { [lindex $buffer 11] > $b5Max } {
+			set b5Max [lindex $buffer 11]
+		    }
+		    lappend f6t [lindex $buffer 12]
+		    if { [lindex $buffer 12] > $f6Max } {
+			set f6Max [lindex $buffer 12]
+		    }
+		    lappend b6t [lindex $buffer 13]
+		    if { [lindex $buffer 13] > $b6Max } {
+			set b6Max [lindex $buffer 13]
+		    }
+		    lappend fnzt [lindex $buffer 14]
+		    if { [lindex $buffer 14] > $fnzMax } {
+			set fnzMax [lindex $buffer 14]
+		    }
+		    lappend bnzt [lindex $buffer 15]
+		    if { [lindex $buffer 15] > $bnzMax } {
+			set bnzMax [lindex $buffer 15]
+		    }
+		    lappend fnpt [lindex $buffer 16]
+		    if { [lindex $buffer 16] > $fnpMax } {
+			set fnpMax [lindex $buffer 16]
+		    }
+		    lappend bnpt [lindex $buffer 17]
+		    if { [lindex $buffer 17] > $bnpMax } {
+			set bnpMax [lindex $buffer 17]
+		    }
+		    lappend aspt [lindex $buffer 18]
+		    if { [lindex $buffer 18] > $aspMax } {
+			set aspMax [lindex $buffer 18]
+		    }
+		    lappend kopent [lindex $buffer 19]
+		    if { [lindex $buffer 19] > $kopenMax } {
+			set kopenMax [lindex $buffer 19]
+		    }
+		    lappend aturbt [lindex $buffer 20]
+		    if { [lindex $buffer 20] > $aturbMax } {
+			set aturbMax [lindex $buffer 20]
+		    }
+		    lappend tiltt [lindex $buffer 21]
+		    if { [lindex $buffer 21] > $tiltMax } {
+			set tiltMax [lindex $buffer 21]
+		    }
+		    lappend aft [lindex $buffer 22]
+		    if { [lindex $buffer 22] > $afMax } {
+			set afMax [lindex $buffer 22]
+		    }
+		    lappend skewt [lindex $buffer 23]
+		    if { [lindex $buffer 23] > $skewMax } {
+			set skewMax [lindex $buffer 23]
+		    }
+		    lappend a1t [lindex $buffer 24]
+		    if { [lindex $buffer 24] > $a1Max } {
+			set a1Max [lindex $buffer 24]
+		    }
+		    lappend b1pt [lindex $buffer 25]
+		    if { [lindex $buffer 25] > $b1pMax } {
+			set b1pMax [lindex $buffer 25]
+		    }
+		    lappend a2t [lindex $buffer 26]
+		    if { [lindex $buffer 26] > $a2Max } {
+			set a2Max [lindex $buffer 26]
+		    }
+		    lappend b2pt [lindex $buffer 27]
+		    if { [lindex $buffer 27] > $b2pMax } {
+			set b2pMax [lindex $buffer 27]
+		    }
+		    lappend a3t [lindex $buffer 28]
+		    if { [lindex $buffer 28] > $a3Max } {
+			set a3Max [lindex $buffer 28]
+		    }
+		    lappend b3pt [lindex $buffer 29]
+		    if { [lindex $buffer 29] > $b3pMax } {
+			set b3pMax [lindex $buffer 29]
+		    }
+		    lappend a4t [lindex $buffer 30]
+		    if { [lindex $buffer 30] > $a4Max } {
+			set a4Max [lindex $buffer 30]
+		    }
+		    lappend b4pt [lindex $buffer 31]
+		    if { [lindex $buffer 31] > $b4pMax } {
+			set b4pMax [lindex $buffer 31]
+		    }
+		    lappend a5t [lindex $buffer 32]
+		    if { [lindex $buffer 32] > $a5Max } {
+			set a5Max [lindex $buffer 32]
+		    }
+		    lappend b5pt [lindex $buffer 33]
+		    if { [lindex $buffer 33] > $b5pMax } {
+			set b5pMax [lindex $buffer 33]
+		    }
+		    lappend a6t [lindex $buffer 34]
+		    if { [lindex $buffer 34] > $a6Max } {
+			set a6Max [lindex $buffer 34]
+		    }
+		    lappend b6pt [lindex $buffer 35]
+		    if { [lindex $buffer 35] > $b6pMax } {
+			set b6pMax [lindex $buffer 35]
+		    }
+		    lappend anpt [lindex $buffer 36]
+		    if { [lindex $buffer 36] > $anpMax } {
+			set anpMax [lindex $buffer 36]
+		    }
+		    lappend abt [lindex $buffer 37]
+		    if { [lindex $buffer 37] > $abMax } {
+			set abMax [lindex $buffer 37]
+		    }
+		    lappend avpt [lindex $buffer 38]
+		    if { [lindex $buffer 38] > $avpMax } {
+			set avpMax [lindex $buffer 38]
+		    }
+		    lappend gaint [lindex $buffer 39]
+		    if { [lindex $buffer 39] > $gainMax } {
+			set gainMax [lindex $buffer 39]
+		    }
+		} else {
+		    if {[string compare [lindex $buffer 1] "name"] == 0} {
+			lappend nameList  [lindex $buffer 4]
+			lappend posList $frameCounter
+		    }
+		}
+	    }
+	}
+	close $fileId
+    }
+    foreach value $posList {
+	.can create line [expr $value * $canvasWidth/$frameCounter] 0 [expr $value * $canvasWidth/$frameCounter] $canvasHeight -fill yellow
+    }
+    set i 0
+    foreach value $posList {
+	.labCan create text  [expr $value * $canvasWidth/$frameCounter] [expr $labCanvasHeight-5] -text [lindex $nameList $i]
+	set i [expr $i+1]
+    }
+    
+}
+
+set message "reading file..."
+update
+readFile
+set message ""
+
+bind .exit <Button> {
+    exit
+}
+
+bind .play <Button> {
+    exec play $fileTitle.wav
+}
+
+
+bind .reload <Button> {
+    .labCan delete all
+    if {[string compare $paintOver false] == 0} {
+	.can delete all
+	foreach value $posList {
+	    .can create line [expr $value * $canvasWidth/$frameCounter] 0 [expr $value * $canvasWidth/$frameCounter] $canvasHeight -fill yellow
+	}
+	set i 0
+	foreach value $posList {
+	    .labCan create text  [expr $value * $canvasWidth/$frameCounter] [expr $labCanvasHeight-5] -text [lindex $nameList $i]
+	    set i [expr $i+1]
+	}
+    }    
+    set message "reading file..."
+    update
+    readFile
+    set message ""
+}
+
+bind .showTrack <Button> {
+
+    set message "calculating line..."
+    update
+    if {$maxVal != 0} {
+	set f0Max $maxVal;set avMax $maxVal;set f1Max $maxVal;set b1Max $maxVal;set f2Max $maxVal;set b2Max $maxVal;set f3Max $maxVal;set b3Max $maxVal;set f4Max $maxVal;set b4Max $maxVal;set f5Max $maxVal; set b5Max $maxVal;set f6Max $maxVal;set b6Max $maxVal; set fnzMax $maxVal;set bnzMax $maxVal;set fnpMax $maxVal;set bnpMax $maxVal;set aspMax $maxVal;set kopenMax $maxVal;set aturbMax $maxVal;set tiltMax $maxVal;set afMax $maxVal;set skewMax $maxVal;set a1Max $maxVal;set b1pMax $maxVal;set a2Max $maxVal;set b2pMax $maxVal;set a3Max $maxVal;set b3pMax $maxVal;set a4Max $maxVal;set b4pMax $maxVal;set a5Max $maxVal;set b5pMax $maxVal;set a6Max $maxVal;set b6pMax $maxVal;set anpMax $maxVal;set abMax $maxVal;set avpMax $maxVal;set gainMax $maxVal;
+    }
+    set message ""
+    if {[string compare $paintOver false] == 0} {
+	set f0 ""; set av ""; set f1 "";set b1 "";set f2 "";set b2 "";set f3 "";set b3 "";set f4 "";set b4 "";set f5 "";set b5 "";set f6 "";set b6 "";set fnz "";set bnz "";set fnp "";set bnp "";set asp "";set kopen "";set aturb "";set tilt "";set af "";set skew "";set a1 "";set b1p "";set a2 "";set b2p "";set a3 "";set b3p "";set a4 "";set b4p "";set a5 "";set b5p "";set a6 "";set b6p "";set anp "";set ab "";set avp "";set gain "";
+	
+	.can delete all
+	.labCan delete all
+	foreach value $posList {
+	    .can create line [expr $value * $canvasWidth/$frameCounter] 0 [expr $value * $canvasWidth/$frameCounter] $canvasHeight -fill yellow
+	}
+	set i 0
+	foreach value $posList {
+	    .labCan create text  [expr $value * $canvasWidth/$frameCounter] [expr $labCanvasHeight-5] -text [lindex $nameList $i]
+	    set i [expr $i+1]
+	}
+	
+    }
+    if {[string compare $param f0] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f0 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f0Max != 0} {
+		lappend f0 [expr abs(((([lindex $f0t $i] * 100) / $f0Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f0 0  
+	    }
+	}
+	eval {.can create line } $f0 -fill $lineColor
+	set message "maxVal = $f0Max"
+	update
+    }
+    if {[string compare $param av] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend av [expr $i * $canvasWidth/$frameCounter]
+	    if {$avMax != 0} {
+		lappend av [expr abs(((([lindex $avt $i] * 100) / $avMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend av 0  
+	    }
+	}
+	eval {.can create line} $av -fill $lineColor
+	set message "maxVal = $avMax"
+	update
+    }
+    if {[string compare $param f1] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	lappend f1 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f1Max != 0} {
+		lappend f1 [expr abs(((([lindex $f1t $i] * 100) / $f1Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f1 0  
+	    }
+	}
+	eval {.can create line} $f1 -fill $lineColor
+	set message "maxVal = $f1Max"
+	update
+    }
+    if {[string compare $param b1] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b1 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b1Max != 0} {
+		lappend b1 [expr abs(((([lindex $b1t $i] * 100) / $b1Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b1 0  
+	    }
+	}
+	eval {.can create line} $b1 -fill $lineColor
+	set message "maxVal = $b1Max"
+	update
+    }
+    if {[string compare $param f2] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f2 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f2Max != 0} {
+		lappend f2 [expr abs(((([lindex $f2t $i] * 100) / $f2Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f2 0  
+	    }
+	}
+	eval {.can create line} $f2 -fill $lineColor
+	set message "maxVal = $f2Max"
+	update
+    }
+    if {[string compare $param b2] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	lappend b2 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b2Max != 0} {
+		lappend b2 [expr abs(((([lindex $b2t $i] * 100) / $b2Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b2 0  
+	    }
+	}
+	eval {.can create line} $b2 -fill $lineColor
+	set message "maxVal = $b2Max"
+	update
+    }
+    if {[string compare $param f3] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f3 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f3Max != 0} {
+		lappend f3 [expr abs(((([lindex $f3t $i] * 100) / $f3Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f3 0  
+	    }
+	}
+	eval {.can create line} $f3 -fill $lineColor
+	set message "maxVal = $f3Max"
+	update
+    }
+    if {[string compare $param b3] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b3 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b3Max != 0} {
+		lappend b3 [expr abs(((([lindex $b3t $i] * 100) / $b3Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b3 0  
+	    }
+	}
+	eval {.can create line} $b3 -fill $lineColor
+	set message "maxVal = $b3Max"
+	update
+    }
+    if {[string compare $param f4] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f4 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f4Max != 0} {
+		lappend f4 [expr abs(((([lindex $f4t $i] * 100) / $f4Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f40  
+	    }
+	}
+	eval {.can create line} $f4 -fill $lineColor
+	set message "maxVal = $f4Max"
+	update
+    }
+    if {[string compare $param b4] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b4 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b4Max != 0} {
+		lappend b4 [expr abs(((([lindex $b4t $i] * 100) / $b4Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b4 0  
+	    }
+	}
+	eval {.can create line} $b4 -fill $lineColor
+	set message "maxVal = $b4Max"
+	update
+    }
+    if {[string compare $param f5] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f5 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f5Max != 0} {
+		lappend f5 [expr abs(((([lindex $f5t $i] * 100) / $f5Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f5 0  
+	    }
+	}
+	eval {.can create line} $f5 -fill $lineColor
+	set message "maxVal = $f5Max"
+	update
+    }
+    if {[string compare $param b5] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b5 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b5Max != 0} {
+		lappend b5 [expr abs(((([lindex $b5t $i] * 100) / $b5Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b5 0  
+	    }
+	}
+	eval {.can create line} $b5 -fill $lineColor
+	set message "maxVal = $b5Max"
+	update
+    }
+    if {[string compare $param f6] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend f6 [expr $i * $canvasWidth/$frameCounter]
+	    if {$f6Max != 0} {
+		lappend f6 [expr abs(((([lindex $f6t $i] * 100) / $f6Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend f6 0  
+	    }
+	}
+	eval {.can create line} $f6 -fill $lineColor
+ 	set message "maxVal = $f6Max"
+	update
+   }
+    if {[string compare $param b6] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b6 [expr $i * $canvasWidth/$frameCounter]
+	    if {$b6Max != 0} {
+		lappend b6 [expr abs(((([lindex $b6t $i] * 100) / $b6Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b6 0  
+	    }
+	}
+	eval {.can create line} $b6 -fill $lineColor
+	set message "maxVal = $b6Max"
+	update
+    }
+    if {[string compare $param fnz] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend fnz [expr $i * $canvasWidth/$frameCounter]
+	    if {$fnzMax != 0} {
+		lappend fnz [expr abs(((([lindex $fnzt $i] * 100) / $fnzMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend fnz 0  
+	    }
+	}
+	eval {.can create line} $fnz -fill $lineColor
+	set message "maxVal = $fnzMax"
+	update
+    }
+    if {[string compare $param bnz] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend bnz [expr $i * $canvasWidth/$frameCounter]
+	    if {$bnzMax != 0} {
+		lappend bnz [expr abs(((([lindex $bnzt $i] * 100) / $bnzMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend bnz 0  
+	    }
+	}
+	eval {.can create line} $bnz -fill $lineColor
+	set message "maxVal = $bnzMax"
+	update
+    }
+    if {[string compare $param fnp] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend fnp [expr $i * $canvasWidth/$frameCounter]
+	    if {$fnpMax != 0} {
+		lappend fnp [expr abs(((([lindex $fnpt $i] * 100) / $fnpMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend fnp 0  
+	    }
+	}
+	eval {.can create line} $fnp -fill $lineColor
+	set message "maxVal = $fnpMax"
+	update
+    }
+    if {[string compare $param bnp] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend bnp [expr $i * $canvasWidth/$frameCounter]
+	    if {$bnpMax != 0} {
+		lappend bnp [expr abs(((([lindex $bnpt $i] * 100) / $bnpMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend bnp 0  
+	    }
+	}
+	eval {.can create line} $bnp -fill $lineColor
+	set message "maxVal = $bnpMax"
+	update
+    }
+    if {[string compare $param asp] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend asp [expr $i * $canvasWidth/$frameCounter]
+	    if {$aspMax != 0} {
+		lappend asp [expr abs(((([lindex $aspt $i] * 100) / $aspMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend asp 0  
+	    }
+	}
+	eval {.can create line} $asp -fill $lineColor
+	set message "maxVal = $aspMax"
+	update
+    }
+    if {[string compare $param kopen] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend kopen [expr $i * $canvasWidth/$frameCounter]
+	    if {$kopenMax != 0} {
+		lappend kopen [expr abs(((([lindex $kopent $i] * 100) / $kopenMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend kopen 0  
+	    }
+	}
+	eval {.can create line} $kopen -fill $lineColor
+	set message "maxVal = $kopenMax"
+	update
+    }
+    if {[string compare $param aturb] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend aturb [expr $i * $canvasWidth/$frameCounter]
+	    if {$aturbMax != 0} {
+		lappend aturb [expr abs(((([lindex $aturbt $i] * 100) / $aturbMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend aturb 0  
+	    }
+	}
+	eval {.can create line} $aturb -fill $lineColor
+	set message "maxVal = $aturbMax"
+	update
+    }
+    if {[string compare $param tilt] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend tilt [expr $i * $canvasWidth/$frameCounter]
+	    if {$tiltMax != 0} {
+		lappend tilt [expr abs(((([lindex $tiltt $i] * 100) / $tiltMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend tilt 0  
+	    }
+	}
+	eval {.can create line} $tilt -fill $lineColor
+	set message "maxVal = $tiltMax"
+	update
+    }
+    if {[string compare $param af] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend af [expr $i * $canvasWidth/$frameCounter]
+	    if {$afMax != 0} {
+		lappend af [expr abs(((([lindex $aft $i] * 100) / $afMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend af 0  
+	    }
+	}
+	eval {.can create line} $af -fill $lineColor
+	set message "maxVal = $afMax"
+	update
+    }
+    if {[string compare $param skew] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend skew [expr $i * $canvasWidth/$frameCounter]
+	    if {$skewMax != 0} {
+		lappend skew [expr abs(((([lindex $skewt $i] * 100) / $skewMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend skew 0  
+	    }
+	}
+	eval {.can create line} $skew -fill $lineColor
+	set message "maxVal = $skewMax"
+	update
+    }
+    if {[string compare $param a1] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a1 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a1Max != 0} {
+		lappend a1 [expr abs(((([lindex $a1t $i] * 100) / $a1Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a1 0  
+	    }
+	}
+	eval {.can create line} $a1 -fill $lineColor
+	set message "maxVal = $a1Max"
+	update
+    }
+    if {[string compare $param b1p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b1p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b1pMax != 0} {
+		lappend b1p [expr abs(((([lindex $b1pt $i] * 100) / $b1pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b1p 0  
+	    }
+	}
+	eval {.can create line} $b1p -fill $lineColor
+	set message "maxVal = $b1pMax"
+	update
+    }
+    if {[string compare $param a2] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a2 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a2Max != 0} {
+		lappend a2 [expr abs(((([lindex $a2t $i] * 100) / $a2Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a2 0  
+	    }
+	}
+	eval {.can create line} $a2 -fill $lineColor
+	set message "maxVal = $a2Max"
+	update
+    }
+    if {[string compare $param b2p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b2p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b2pMax != 0} {
+		lappend b2p [expr abs(((([lindex $b2pt $i] * 100) / $b2pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b2p 0  
+	    }
+	}
+	eval {.can create line} $b2p -fill $lineColor
+	set message "maxVal = $b2Max"
+	update
+    }
+    if {[string compare $param a3] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a3 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a3Max != 0} {
+		lappend a3 [expr abs(((([lindex $a3t $i] * 100) / $a3Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a3 0  
+	    }
+	}
+	eval {.can create line} $a3 -fill $lineColor
+	set message "maxVal = $a3Max"
+	update
+    }
+    if {[string compare $param b3p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b3p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b3pMax != 0} {
+		lappend b3p [expr abs(((([lindex $b3pt $i] * 100) / $b3pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b3p 0  
+	    }
+	}
+	eval {.can create line} $b3p -fill $lineColor
+	set message "maxVal = $b3pMax"
+	update
+    }
+    if {[string compare $param a4] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a4 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a4Max != 0} {
+		lappend a4 [expr abs(((([lindex $a4t $i] * 100) / $a4Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a4 0  
+	    }
+	}
+	eval {.can create line} $a4 -fill $lineColor
+	set message "maxVal = $a4Max"
+	update
+    }
+    if {[string compare $param b4p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b4p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b4pMax != 0} {
+		lappend b4p [expr abs(((([lindex $b4pt $i] * 100) / $b4pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b4p 0  
+	    }
+	}
+	eval {.can create line} $b4p -fill $lineColor
+	set message "maxVal = $b4Max"
+	update
+    }
+    if {[string compare $param a5] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a5 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a5Max != 0} {
+		lappend a5 [expr abs(((([lindex $a5t $i] * 100) / $a5Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a5 0  
+	    }
+	}
+	eval {.can create line} $a5 -fill $lineColor
+	set message "maxVal = $a5Max"
+	update
+    }
+    if {[string compare $param b5p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b5p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b5pMax != 0} {
+		lappend b5p [expr abs(((([lindex $b5pt $i] * 100) / $b5pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b5p 0  
+	    }
+	}
+	eval {.can create line} $b5p -fill $lineColor
+	set message "maxVal = $b5pMax"
+	update
+    }
+    if {[string compare $param a6] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend a6 [expr $i * $canvasWidth/$frameCounter]
+	    if {$a6Max != 0} {
+		lappend a6 [expr abs(((([lindex $a6t $i] * 100) / $a6Max) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend a6 0  
+	    }
+	}   
+	eval {.can create line} $a6 -fill $lineColor
+	set message "maxVal = $a6Max"
+	update
+    }
+    if {[string compare $param b6p] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend b6p [expr $i * $canvasWidth/$frameCounter]
+	    if {$b6pMax != 0} {
+		lappend b6p [expr abs(((([lindex $b6pt $i] * 100) / $b6pMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend b6p 0  
+	    }
+	}
+	eval {.can create line} $b6p -fill $lineColor
+	set message "maxVal = $b6pMax"
+	update
+    }
+    if {[string compare $param anp] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend anp [expr $i * $canvasWidth/$frameCounter]
+	    if {$anpMax != 0} {
+		lappend anp [expr abs(((([lindex $anpt $i] * 100) / $anpMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend anp 0  
+	    }
+	}
+	eval {.can create line} $anp -fill $lineColor
+	set message "maxVal = $anpMax"
+	update
+    }
+    if {[string compare $param ab] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend ab [expr $i * $canvasWidth/$frameCounter]
+	    if {$abMax != 0} {
+		lappend ab [expr abs(((([lindex $abt $i] * 100) / $abMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend ab 0  
+	    }
+	}
+	eval {.can create line} $ab -fill $lineColor
+	set message "maxVal = $abMax"
+	update
+    }
+    if {[string compare $param avp] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend avp [expr $i * $canvasWidth/$frameCounter]
+	    if {$avpMax != 0} {
+		lappend avp [expr abs(((([lindex $avpt $i] * 100) / $avpMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend avp 0  
+	    }
+	}
+	eval {.can create line} $avp -fill $lineColor
+	set message "maxVal = $avpMax"
+	update
+    }
+    if {[string compare $param gain] == 0} {
+	for {set i 0} {$i < $frameCounter} {incr i} {
+	    lappend gain [expr $i * $canvasWidth/$frameCounter]
+	    if {$gainMax != 0} {
+		lappend gain [expr abs(((([lindex $gaint $i] * 100) / $gainMax) * $canvasHeight) / 100 - $canvasHeight) ]
+	    } else {
+		lappend gain 0  
+	    }
+	}
+	eval {.can create line} $gain -fill $lineColor
+	set message "maxVal = $gainMax"
+	update
+    }
+}
+
+#f0
+#av
+#f1
+#b1
+#f2
+#b2
+#f3
+#b3
+#f4
+#b4
+#f5
+#b5
+#f6
+#b6
+#fnz
+#bnz
+#fnp
+#bnp
+#asp
+#kopen
+#aturb
+#tilt
+#af
+#skew
+#a1
+#b1p
+#a2
+#b2p
+#a3
+#b3p
+#a4
+#b4p
+#a5
+#b5p
+#a6	
+#b6p
+#anp
+#ab
+#avp
+#gain

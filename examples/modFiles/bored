@@ -1,0 +1,21 @@
+-changeSpeechRate 120 1 1
+-changeDurStressed 140 1 1 
+
+-changeAvrF0 80
+-changeRange 50
+-changeVariability 80 
+
+-changePhraseContour 1 100 
+-changePhraseContourToAccent 100
+
+-changeStressedAvrF0 100 1
+-changePitchContourStressed 1 0 0 contour, gradient, both
+
+-undershootVowels 0 50
+-undershootVowels 1 20
+-undershootVowels 2 20
+
+
+# add breathyness to all vowels/voiced phones
+-breathy 50
+-laryngealized 50

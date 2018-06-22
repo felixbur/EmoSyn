@@ -1,0 +1,16 @@
+# manipulate duration-parameters
+
+-changeSpeechRate 70 1 1
+-changeDurFricVL 150 1
+#-addWaves 200 80 1
+-changePitchContourStressed 1 50 1 contour, gradient, both
+-changeRange 200
+-changeAvrF0 150
+
+#-changeStressedAvrF0 150 1
+
+#-undershootVowels 0 30 accent rate
+#-overshootVowels 1 30
+#-overshootVowels 2 50
+
+-spreadLips 10

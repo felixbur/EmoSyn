@@ -1,0 +1,16 @@
+crying:
+fixed
+version 2:
+#-changeStressedAvrF0 80 1
+-changePitchContourStressed 2 20 1 contour, gradient, both
+-changeSpeechRate 120 1 1
+-changeAvrF0 200
+-changeRange 50
+-changeVariability 80 
+version 3:
+#-breathy 50
+version4:
+-falsett 50
+#-jitter 0 200 2
+#-jitter 1 200 2
+#-jitter 2 200 2

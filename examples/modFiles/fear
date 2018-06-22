@@ -1,0 +1,19 @@
+-changeSpeechRate 70 1 1
+#-changeDurStressed 120 0 1
+#-changeDurNonStressed 70 1 1 
+#-changePitchContourStressed 0 0 1 contour, gradient, both
+#-changeLastSylContour 1 30
+
+-changeAvrF0 150
+-changeRange 120
+#-changePhraseContour 1 130 
+#-changePhraseContourToAccent 100
+
+#-changeStressedAvrF0 100 1
+
+#-jitter 0 300 2
+#-jitter 1 300 2
+#-jitter 2 300 2
+
+-falsett 100
+#-tense 50

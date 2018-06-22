@@ -1,0 +1,26 @@
+-changeSpeechRate 140 1 1 # rate, durMethod, changeMethod
+-changePitchContourStressed 2 30 1 contour, gradient, both
+
+-changeAvrF0 80
+versuch 1:
+#-changeAvrF0 100
+-changeRange 80
+-changeVariability 80 
+
+versuch:
+
+#-changePhraseContour 1 50 
+#-changePhraseContourToAccent 100
+#-changeLastSylContour 1 30 // contour, gradient
+
+versuch
+#-changeStressedAvrF0 80 1
+
+-jitter 0 300 2  # <accent> <rate> <method>
+-jitter 1 300 2
+-jitter 2 300 2
+
+# add breathyness to all vowels/voiced phones
+-breathy 50
+versuch:
+#-breathy 70
